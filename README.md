@@ -22,7 +22,7 @@ The repository is organized by platform and challenge category:
 │   └── Medium/
     └── HARD/
 ├── Challenges/      # Specific event write-ups (e.g., picoCTF)
-│   ├── picoCTF-2025/
-│   └── LACTF-2026/
+│   ├── picoCTF/
+│   └── LACTF/
 ├── Scripts/           # Custom Python/Bash automation tools
 └── Resources/         # Cheat sheets and methodology notes
