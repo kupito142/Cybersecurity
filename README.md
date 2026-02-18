@@ -2,6 +2,10 @@
 
 A centralized repository for my **Capture The Flag (CTF)** write-ups, custom exploit scripts, and security research. This serves as both a personal knowledge base and a portfolio of my technical journey in ethical hacking.
 
+## Disclaimer
+
+This repository is for educational purposes only. I do not condone the use of any techniques or tools described here for illegal activities. Always obtain permission before testing any system.
+
 ---
 
 ## 🚩 Platforms & Profiles
@@ -26,3 +30,7 @@ The repository is organized by platform and challenge category:
 │   └── LACTF/
 ├── Scripts/           # Custom Python/Bash automation tools
 └── Resources/         # Cheat sheets and methodology notes
+
+
+
+
