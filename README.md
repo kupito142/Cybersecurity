@@ -22,13 +22,11 @@ The repository is organized by platform and challenge category:
 ```text
 .
 ├── TryHackMe/         # Guided rooms and pathways
-│   ├── Easy/
-│   └── Medium/
-    └── HARD/
+│   
 ├── Challenges/      # Specific event write-ups (e.g., picoCTF)
 │   ├── picoCTF/
 │   └── LACTF/
-├── Scripts/           # Custom Python/Bash automation tools
+├── Tools/           # Useful Security & Cybersecurity tools
 └── Resources/         # Cheat sheets and methodology notes
 
 
