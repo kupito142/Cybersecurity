@@ -4,7 +4,7 @@ In this page you would find links to website that may be useful for anything sec
 
 ## Disclaimer
 
-This are only for educational purposes only. Only and only for ethical use. Thank you!
+This are only for educational purposes only. Only and only for ethical use. I do not condone the use of any techniques or tools described here for illegal activities. Always obtain permission before testing any system. Thank you!
 
 ## Links
 
