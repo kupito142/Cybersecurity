@@ -44,3 +44,17 @@ Thank you!
 15. Proton Mail: https://proton.me/mail
 
 16. Sans Institute Tools: https://www.sans.org/tools
+
+17. Python Code Generator: https://codingfleet.com/code-generator/python/
+
+18. Python Code Assistant: https://codingfleet.com/code-assistant/python/
+
+19. Python Code Explainers: https://codingfleet.com/code-explainer/python/
+
+20. Python Code Enhancer: https://codingfleet.com/code-enhancer/python/
+
+21. Python Code Comment Generator: https://codingfleet.com/comment-generator/python/
+
+22. Python Unit Test Generator: https://codingfleet.com/unit-test-generator/python/
+
+23. Convert Your Code to Python: https://codingfleet.com/code-converter/python/
